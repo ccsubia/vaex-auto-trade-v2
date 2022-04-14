@@ -1,0 +1,7 @@
+.idea
+__pycache__
+venv
+src/__pycache__
+
+src/config.ini
+src/logs
