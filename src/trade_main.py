@@ -4,16 +4,20 @@ import logging
 import multiprocessing
 import time
 import traceback
-
+from apscheduler.schedulers.blocking import BlockingScheduler
+from datetime import datetime
 import websockets
 
+from report.generate_report import gen_volume_report, gen_assets_report, gen_analyze_report
 from tg.bot import main as tg_bot
 from trade import hot_coin_func_trade, utils, period_trade
 from trade.alert_price import alert_price
+from trade.fork_trade import fork_trade
 from trade.hot_coin_api import HotCoin
 from utils.config_loader import config as new_config
 from trade.default_config import config
 from utils.logger_init import init_logger
+from utils.remind_func import remind_tg
 
 logger = logging.getLogger(__name__)
 
@@ -170,23 +174,71 @@ def func(hot_coin, target_func):
             logging.warning("Main func failed, restart")
 
 
+def run_sched():
+    sched = BlockingScheduler(timezone="Asia/Shanghai")
+
+    # 输出时间
+    # @sched.scheduled_job('cron', minute=0, hour='*/8')
+    # # @sched.scheduled_job('interval', seconds=5)
+    # def job():
+    #     gen_volume_report()
+    #     gen_assets_report()
+    #     gen_analyze_report()
+
+    @sched.scheduled_job('interval', seconds=60)
+    def check_status():
+        print_prefix = f'[Status Check]'
+        try:
+            new_config.load_config()
+            logger.info(f'{print_prefix}')
+            new_hot_coin = HotCoin(symbol=new_config.SYMBOL)
+            ticker_data = new_hot_coin.get_ticker()
+            print(ticker_data)
+            if 'msg' in ticker_data:
+                logger.warning(f'{print_prefix} 交易量获取失败 {ticker_data}')
+                remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'交易量获取失败，请检查IP是否被封禁，API错误信息 {ticker_data["msg"]}')
+            else:
+                minutes_vol = 0
+                for i in range(int(new_config.alert_vol_count_minute)):
+                    minutes_vol += float(ticker_data[i]['vol'])
+                if minutes_vol < new_config.alert_vol_min:
+                    logger.warning(f'{print_prefix} 交易量异常，{new_config.alert_vol_count_minute}分钟内交易 {minutes_vol}，'
+                                   f'小于设定最小值{new_config.alert_vol_min}')
+                    remind_tg(new_config.ALERT_PRICE_TG_CHAT,
+                              f'#{new_config.SYMBOL_NAME} \n'
+                              f'检测到最近{new_config.alert_vol_count_minute}分钟交易量低于预警交易量{new_config.alert_vol_min}\n'
+                              f'交易量总计{round(minutes_vol, 4)}')
+                else:
+                    logger.info(f'{print_prefix} 交易量正常，{new_config.alert_vol_count_minute}分钟内交易 {minutes_vol}，'
+                                f'大于设定最小值{new_config.alert_vol_min}')
+        except Exception as e:
+            logger.exception(e)
+            remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 遇到未知错误: ' + str(e))
+
+    sched.start()
+
+
+# BlockingScheduler
+# sched.add_job(job, 'cron', minutes='*/2')
+
 new_config.load_config()
 
 if __name__ == '__main__':
     hot_coin = HotCoin(symbol=new_config.SYMBOL)
     hot_coin.auth(key=new_config.ACCESS_KEY, secret=new_config.SECRET_KEY)
-
     multiprocessing.set_start_method('spawn')
-    pool = multiprocessing.Pool(processes=3)
+    pool = multiprocessing.Pool(processes=5)
     # pool.apply_async(func, (hot_coin, hot_coin_func_trade.self_trade,))
     # pool.apply_async(func, (hot_coin, hot_coin_func_trade.cross_trade,))
-    # pool.apply_async(func, (hot_coin, period_trade.period_trade,))
-    pool.apply_async(func, (hot_coin, alert_price,))
     # pool.apply_async(cancel_pool, (hot_coin,))
     # pool.apply_async(save_trades_pool, (hot_coin,))
     # pool.apply_async(print_trade_pool)
     # pool.apply_async(print_cancel_pool)
     # pool.apply_async(wave_trade_pool, (hot_coin,))
+    # pool.apply_async(func, (hot_coin, period_trade.period_trade,))
+    pool.apply_async(func, (hot_coin, alert_price,))
+    # pool.apply_async(func, (hot_coin, fork_trade,))
     pool.apply_async(tg_bot)
+    pool.apply_async(run_sched)
     pool.close()
     pool.join()

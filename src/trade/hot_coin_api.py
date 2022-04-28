@@ -198,7 +198,10 @@ class HotCoin:
             if len(depth_infos) > 0:
                 return depth_infos
 
-    def get_ticker(self, step=60):
+    def get_ticker(self, step='1min'):
+        return self.public_request('GET', 'klines', symbol=self.symbol, interval=step)
+
+    def get_24h_ticker(self):
         return self.public_request('GET', 'ticker', symbol=self.symbol)
 
 
@@ -206,14 +209,13 @@ CancelRecord = namedtuple('CancelRecord', ['orderId', 'side', 'price', 'origQty'
 
 if __name__ == "__main__":
     logging.info("Start...")
-    # from trade.default_config import config
-    from utils.config_loader import config
+    from src.utils.config_loader import config
+    config.load_config()
+    print(config.SYMBOL)
     hot_coin = HotCoin(symbol=config.SYMBOL)
     hot_coin.auth(key=config.ACCESS_KEY, secret=config.SECRET_KEY)
-    # logging.info(vaex.get_depth())
     # while True:
     #     print(hot_coin.get_depth())
         # time.sleep(3)
-    print(hot_coin.get_ticker())    # logging.info(vaex.get_order(61964762655))
-    # target_trade_action(vaex=vaex, adjusted_percent=0.01)
-    # target_trade_allocation(vaex, 0.01, 0, 2)
+    # print(hot_coin.get_account_info())
+    # print(hot_coin.get_order())

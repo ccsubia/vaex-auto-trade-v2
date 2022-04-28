@@ -1,12 +1,15 @@
 [Secret]
 access_key =
 secret_key =
+other_access_keys =
+other_secret_keys =
 bot_token =
 server_jiang_token =
 bot_name = vaex_hspc_bot
 
 [API]
 symbol = HSPCUSDT
+symbol_name = HSPC
 http_api = https://openapi.vaex.tech/sapi/v1/
 websockets_api = wss://wspool.hiotc.pro/kline-api/ws
 
@@ -18,9 +21,21 @@ admins = 705788276
 period_trade_on = False
 default_period_trade_amount_min = 10
 default_period_trade_amount_max = 20.2
-default_period_max_trade_amount = 2000
+default_period_max_trade_amount = 100
 default_period_trade_interval_time = 20
 default_period_is_open = True
+batch_push_trade_on = False
+auto_batch_push_trade_type = 0
+auto_batch_push_trade_push_count = 0
+auto_batch_push_trade_start_price = 0
+auto_batch_push_trade_price_step = 0
+auto_batch_push_trade_push_first_amount = 0
+auto_batch_push_trade_up_amount = 0
+auto_batch_push_trade_time_interval = 0
+fork_trade_on = False
+fork_trade_amount_max = 100
+fork_trade_random_amount_min = 1
+fork_trade_random_amount_max = 2
 
 [Alert]
 alert_price_server_jiang_on = False
@@ -29,3 +44,8 @@ alert_price_tg_chat = -789656180
 alert_price_interval_minute = 1
 alert_price_min = 0.2297
 alert_price_max = 0.2378
+alert_vol_count_minute = 15
+alert_vol_min = 100
+
+[Report]
+report_tg_chat = 705788276

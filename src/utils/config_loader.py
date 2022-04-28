@@ -10,11 +10,14 @@ class _Config:
     def __init__(self):
         self._access_key = ''
         self._secret_key = ''
+        self._other_access_keys = ''
+        self._other_secret_keys = ''
         self._bot_token = ''
         self._bot_name = ''
         self._server_jiang_token = ''
         self._super_admin = ''
         self._symbol = ''
+        self._symbol_name = ''
         self._http_api = ''
         self._websockets_api = ''
         self._admins = ''
@@ -32,6 +35,24 @@ class _Config:
         self._alert_price_interval_minute = 0
         self._alert_price_min = 0
         self._alert_price_max = 0
+        self._alert_vol_count_minute = 0
+        self._alert_vol_min = 0
+
+        self._report_tg_chat = 0
+
+        self._batch_push_trade_on = False
+        self._auto_batch_push_trade_type = 0
+        self._auto_batch_push_trade_push_count = 0
+        self._auto_batch_push_trade_start_price = 0
+        self._auto_batch_push_trade_price_step = 0
+        self._auto_batch_push_trade_push_first_amount = 0
+        self._auto_batch_push_trade_up_amount = 0
+        self._auto_batch_push_trade_time_interval = 0
+        
+        self._fork_trade_on = False
+        self._fork_trade_amount_max = 0
+        self._fork_trade_random_amount_min = 0
+        self._fork_trade_random_amount_max = 0
 
     def load_config(self):
         logger.debug('Found token')
@@ -58,6 +79,7 @@ class _Config:
             logger.warning("Can't find Alert section in config.")
             sys.exit(1)
         config_alert = config_file['Alert']
+        config_report = config_file['Report']
 
         config_secret_keywords_str = [
             'access_key',
@@ -66,18 +88,40 @@ class _Config:
             'bot_name',
         ]
         config_secret_keywords_optional_str = [
+            'other_access_keys',
+            'other_secret_keys',
             'server_jiang_token',
         ]
         config_api_keywords_str = [
             'symbol',
+            'symbol_name',
             'http_api',
             'websockets_api',
         ]
-        config_period_trade_keywords_float = [
+        config_trade_keywords_float = [
             'default_period_trade_amount_min',
             'default_period_trade_amount_max',
             'default_period_max_trade_amount',
             'default_period_trade_interval_time',
+            'fork_trade_amount_max',
+            'fork_trade_random_amount_min',
+            'fork_trade_random_amount_max',
+        ]
+        config_trade_keywords_bool = [
+            'period_trade_on',
+            'default_period_is_open',
+            'batch_push_trade_on',
+            'fork_trade_on'
+        ]
+
+        config_auto_push_trade_keywords_float = [
+            'auto_batch_push_trade_type',
+            'auto_batch_push_trade_push_count',
+            'auto_batch_push_trade_start_price',
+            'auto_batch_push_trade_price_step',
+            'auto_batch_push_trade_push_first_amount',
+            'auto_batch_push_trade_up_amount',
+            'auto_batch_push_trade_time_interval',
         ]
 
         self.get_config_from_section('str', config_secret_keywords_str, config_secret)
@@ -87,17 +131,29 @@ class _Config:
         self.get_config_from_section('str', ['super_admin'], config_file['Admin'])
         self.get_config_from_section('str', ['admins'], config_file['Admin'], optional=True)
 
-        self.get_config_from_section('float', config_period_trade_keywords_float, config_trade)
-        self.get_config_from_section('bool', ['period_trade_on', 'default_period_is_open'], config_trade)
+        self.get_config_from_section('float', config_trade_keywords_float, config_trade)
+        self.get_config_from_section('bool', config_trade_keywords_bool, config_trade)
+
+        self.get_config_from_section('float', config_auto_push_trade_keywords_float, config_trade, optional=True)
 
         self.get_config_from_section('bool', ['alert_price_server_jiang_on', 'alert_price_tg_on'], config_alert)
         self.get_config_from_section('float', ['alert_price_min', 'alert_price_max', 'alert_price_tg_chat',
-                                               'alert_price_interval_minute'], config_alert)
+                                               'alert_price_interval_minute', 'alert_vol_count_minute', 'alert_vol_min']
+                                     , config_alert)
+        self.get_config_from_section('float', ['report_tg_chat'], config_report)
 
         if self._admins:
             self._admins = [int(item) for item in self._admins.split(',')]
         else:
             self._admins = []
+        if self._other_access_keys:
+            self._other_access_keys = [item for item in self._other_access_keys.split(',')]
+        else:
+            self._other_access_keys = []
+        if self._other_secret_keys:
+            self._other_secret_keys = [item for item in self._other_secret_keys.split(',')]
+        else:
+            self._other_secret_keys = []
         self._depth_param = '{"sub": "market.' + self._symbol + '.trade.depth"}'
 
     def get_config_from_section(self, var_type, keywords, section, optional=False):
@@ -112,10 +168,11 @@ class _Config:
                 value = section.getboolean(item, False)
             else:
                 raise TypeError
-            if not optional and not value and value is not False:
+            if not optional and not value and value is not False and value != 0:
                 logger.warning('{} is not provided.'.format(item))
+                logger.warning('{} is not provided.'.format(value))
                 raise Exception
-            logger.debug('Found {}: {}'.format(item, value))
+            # logger.debug('Found {}: {}'.format(item, value))
             setattr(self, '_' + item, value)
 
     @property
@@ -237,6 +294,150 @@ class _Config:
     @ALERT_PRICE_INTERVAL_MINUTE.setter
     def ALERT_PRICE_INTERVAL_MINUTE(self, val):
         self._alert_price_interval_minute = val
+
+    @property
+    def alert_vol_count_minute(self):
+        return self._alert_vol_count_minute
+
+    @alert_vol_count_minute.setter
+    def alert_vol_count_minute(self, val):
+        self._alert_vol_count_minute = val
+
+    @property
+    def alert_vol_min(self):
+        return self._alert_vol_min
+
+    @alert_vol_min.setter
+    def alert_vol_min(self, val):
+        self._alert_vol_min = val
+
+    @property
+    def REPORT_TG_CHAT(self):
+        return self._report_tg_chat
+
+    @REPORT_TG_CHAT.setter
+    def REPORT_TG_CHAT(self, val):
+        self._report_tg_chat = val
+
+    @property
+    def SYMBOL_NAME(self):
+        return self._symbol_name
+
+    @SYMBOL_NAME.setter
+    def SYMBOL_NAME(self, val):
+        self._symbol_name = val
+
+    @property
+    def OTHER_ACCESS_KEYS(self):
+        return self._other_access_keys
+
+    @OTHER_ACCESS_KEYS.setter
+    def OTHER_ACCESS_KEYS(self, val):
+        self._other_access_keys = val
+
+    @property
+    def OTHER_SECRET_KEYS(self):
+        return self._other_secret_keys
+
+    @OTHER_SECRET_KEYS.setter
+    def OTHER_SECRET_KEYS(self, val):
+        self._other_secret_keys = val
+
+    @property
+    def batch_push_trade_on(self):
+        return self._batch_push_trade_on
+
+    @batch_push_trade_on.setter
+    def batch_push_trade_on(self, val):
+        self._batch_push_trade_on = val
+
+    @property
+    def auto_batch_push_trade_type(self):
+        return self._auto_batch_push_trade_type
+    
+    @auto_batch_push_trade_type.setter
+    def auto_batch_push_trade_type(self, val):
+        self._auto_batch_push_trade_type = val
+    
+    @property
+    def auto_batch_push_trade_push_count(self):
+        return self._auto_batch_push_trade_push_count
+    
+    @auto_batch_push_trade_push_count.setter
+    def auto_batch_push_trade_push_count(self, val):
+        self._auto_batch_push_trade_push_count = val
+        
+    @property
+    def auto_batch_push_trade_start_price(self):
+        return self._auto_batch_push_trade_start_price
+    
+    @auto_batch_push_trade_start_price.setter
+    def auto_batch_push_trade_start_price(self, val):
+        self._auto_batch_push_trade_start_price = val
+        
+    @property
+    def auto_batch_push_trade_price_step(self):
+        return self._auto_batch_push_trade_price_step
+    
+    @auto_batch_push_trade_price_step.setter
+    def auto_batch_push_trade_price_step(self, val):
+        self._auto_batch_push_trade_price_step = val
+        
+    @property
+    def auto_batch_push_trade_push_first_amount(self):
+        return self._auto_batch_push_trade_push_first_amount
+    
+    @auto_batch_push_trade_push_first_amount.setter
+    def auto_batch_push_trade_push_first_amount(self, val):
+        self._auto_batch_push_trade_push_first_amount = val
+        
+    @property
+    def auto_batch_push_trade_up_amount(self):
+        return self._auto_batch_push_trade_up_amount
+    
+    @auto_batch_push_trade_up_amount.setter
+    def auto_batch_push_trade_up_amount(self, val):
+        self._auto_batch_push_trade_up_amount = val
+    
+    @property
+    def auto_batch_push_trade_time_interval(self):
+        return self._auto_batch_push_trade_time_interval
+    
+    @auto_batch_push_trade_time_interval.setter
+    def auto_batch_push_trade_time_interval(self, val):
+        self._auto_batch_push_trade_time_interval = val
+
+    @property
+    def fork_trade_on(self):
+        return self._fork_trade_on
+
+    @fork_trade_on.setter
+    def fork_trade_on(self, val):
+        self._fork_trade_on = val
+
+    @property
+    def fork_trade_amount_max(self):
+        return self._fork_trade_amount_max
+    
+    @fork_trade_amount_max.setter
+    def fork_trade_amount_max(self, val):
+        self._fork_trade_amount_max = val
+
+    @property
+    def fork_trade_random_amount_min(self):
+        return self._fork_trade_random_amount_min
+
+    @fork_trade_random_amount_min.setter
+    def fork_trade_random_amount_min(self, val):
+        self._fork_trade_random_amount_min = val
+        
+    @property
+    def fork_trade_random_amount_max(self):
+        return self._fork_trade_random_amount_max
+    
+    @fork_trade_random_amount_max.setter
+    def fork_trade_random_amount_max(self, val):
+        self._fork_trade_random_amount_max = val
 
 
 config = _Config()
