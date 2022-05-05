@@ -193,7 +193,6 @@ def run_sched():
             logger.info(f'{print_prefix}')
             new_hot_coin = HotCoin(symbol=new_config.SYMBOL)
             ticker_data = new_hot_coin.get_ticker()
-            print(ticker_data)
             if 'msg' in ticker_data:
                 logger.warning(f'{print_prefix} 交易量获取失败 {ticker_data}')
                 remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'交易量获取失败，请检查IP是否被封禁，API错误信息 {ticker_data["msg"]}')
