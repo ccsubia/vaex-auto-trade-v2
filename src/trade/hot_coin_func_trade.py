@@ -33,15 +33,13 @@ async def get_dpeth(websocket):
     ret = json.loads(ret)
     sellprice, sellvolume = [], []
     buyprice, buyvolume = [], []
-    if 'ping' in ret:
-        await websocket.send('{"pong": "pong"}')
-    if 'data' in ret:
-        depth_data = ret['data']
-        if ('asks' in depth_data) and ('bids' in depth_data):
+    if 'tick' in ret:
+        depth_data = ret['tick']
+        if ('asks' in depth_data) and ('buys' in depth_data):
             for order in depth_data['asks']:
                 sellprice.append(order[0])
                 sellvolume.append(order[1])
-            for order in depth_data['bids']:
+            for order in depth_data['buys']:
                 buyprice.append(order[0])
                 buyvolume.append(order[1])
     # 分别获得买的挂单价格序列buyprice，买的挂单量序列buyvolume，卖的挂单价格序列sellprice，卖的挂单量序列sellvolume
@@ -70,11 +68,11 @@ async def get_dpeth(websocket):
 # self trade
 # self交易量的区间和频率： 在买一卖一随机取价和区间，两秒后进行撤销
 async def self_trade(hot_coin, websocket):
-    reqParam = config['depth_param']
+    reqParam = '{\"event\":\"sub\",\"params\":{\"channel\":\"market_' + new_config.SYMBOL.lower() + '_depth_step0\",\"cb_id\":\"1\"}}'
     await websocket.send(reqParam)
     self_cnt = 0
     while True:
-        new_config.load_config()
+        new_config.load_self_trade_config()
         try:
             print_prefix = f'[Self Trade: {self_cnt}]'
             logging.info(f'{print_prefix} Start time {utils.get_now_time_str("%Y/%m/%d %H:%M:%S")}...')
@@ -85,7 +83,7 @@ async def self_trade(hot_coin, websocket):
             direction = random.randint(0, 1)
             side_str = '买单' if direction else '卖单'
             tradeprice = round(random.uniform(float(buyprice[0]), float(sellprice[0])), config['price_decimal_num'])
-            tradeVolume = round(random.uniform(config['self_tradeMin'], config['self_tradeMax']),
+            tradeVolume = round(random.uniform(new_config.self_tradeMin, new_config.self_tradeMax),
                                 config['volumn_decimal_num'])
             '''if self_trade_price_max!=0 and tradeprice > self_trade_price_max:
                 tradeprice = self_trade_price_max
@@ -94,7 +92,7 @@ async def self_trade(hot_coin, websocket):
             result = hot_coin.trade(price=tradeprice, amount=tradeVolume, direction=direction)
             if hot_coin.check_trade_status(result):
                 logging.info(f'{print_prefix} 下单方向:{side_str}, 价格:{tradeprice}, 下单量:{tradeVolume}')
-                time.sleep(config['self_tradeFrequence'])  # n秒后进行反向下单
+                time.sleep(new_config.self_trade_interval)  # n秒后进行反向下单
                 result = hot_coin.trade(price=tradeprice, amount=tradeVolume, direction=1 - direction)
                 # 打印结果值
                 if hot_coin.check_trade_status(result):
@@ -105,7 +103,7 @@ async def self_trade(hot_coin, websocket):
                 logging.warning(f'{print_prefix} 下单失败, retry')
                 time.sleep(2)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             time.sleep(2)
             break
         self_cnt += 1
@@ -119,6 +117,7 @@ async def cross_trade(hot_coin, websocket):
     cross_cnt = 0
     while True:
         try:
+            new_config.load_cross_trade_config()
             print_prefix = f'[Cross Trade: {cross_cnt}]'
             logging.info(f'{print_prefix} Start time {utils.get_now_time_str("%Y/%m/%d %H:%M:%S")}...')
             buyprice, buyvolume, sellprice, sellvolume = await get_dpeth(websocket)
@@ -129,32 +128,32 @@ async def cross_trade(hot_coin, websocket):
             direction = random.randint(0, 1)  # 随机取方向
             side_str = '买单' if direction else '卖单'
             if direction:  # 如果随机数为1，挂买单
-                if len(buyprice) > config['cross_depth']:
+                if len(buyprice) > new_config.cross_depth:
                     tradeprice = round(random.uniform(float(buyprice[9]), float(buyprice[0])),
                                        config['price_decimal_num'])  # 随机取价格
-                    tradeVolume = round(random.uniform(config['cross_tradeMin'], config['cross_tradeMax']),
+                    tradeVolume = round(random.uniform(new_config.cross_tradeMin, new_config.cross_tradeMax),
                                         config['volumn_decimal_num'])  # 随机取量
                 else:
                     tradeprice = round(random.uniform(float(buyprice[-1]), float(buyprice[0])),
                                        config['price_decimal_num'])
-                    tradeVolume = round(random.uniform(config['cross_tradeMin'], config['cross_tradeMax']),
+                    tradeVolume = round(random.uniform(new_config.cross_tradeMin, new_config.cross_tradeMax),
                                         config['volumn_decimal_num'])
             else:
-                if len(sellprice) > config['cross_depth']:
+                if len(sellprice) > new_config.cross_depth:
                     tradeprice = round(random.uniform(float(sellprice[0]), float(sellprice[9])),
                                        config['price_decimal_num'])
-                    tradeVolume = round(random.uniform(config['cross_tradeMin'], config['cross_tradeMax']),
+                    tradeVolume = round(random.uniform(new_config.cross_tradeMin, new_config.cross_tradeMax),
                                         config['volumn_decimal_num'])
                 else:
                     tradeprice = round(random.uniform(float(sellprice[0]), float(sellprice[-1])),
                                        config['price_decimal_num'])
-                    tradeVolume = round(random.uniform(config['cross_tradeMin'], config['cross_tradeMax']),
+                    tradeVolume = round(random.uniform(new_config.cross_tradeMin, new_config.cross_tradeMax),
                                         config['volumn_decimal_num'])
 
-            if config['cross_trade_price_max'] != 0 and tradeprice > config['cross_trade_price_max']:
-                tradeprice = config['cross_trade_price_max']
-            if config['cross_trade_price_min'] != 0 and tradeprice < config['cross_trade_price_min']:
-                tradeprice = config['cross_trade_price_min']
+            if new_config.cross_trade_price_max != 0 and tradeprice > new_config.cross_trade_price_max:
+                tradeprice = new_config.cross_trade_price_max
+            if new_config.cross_trade_price_min != 0 and tradeprice < new_config.cross_trade_price_min:
+                tradeprice = new_config.cross_trade_price_min
             result = hot_coin.trade(price=tradeprice, amount=tradeVolume, direction=direction)
             if hot_coin.check_trade_status(result):
                 logging.info(f'{print_prefix} 下单方向:{side_str}, 价格:{tradeprice}, 下单量:{tradeVolume}')
@@ -162,9 +161,9 @@ async def cross_trade(hot_coin, websocket):
                 logging.warning(f'{print_prefix} 下单失败, retry')
                 time.sleep(2)
                 continue
-            time.sleep(config['cross_tradeFrequence'])
+            time.sleep(new_config.cross_trade_interval)
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             time.sleep(2)
             break
         cross_cnt += 1
@@ -180,57 +179,57 @@ def adjustable_cancel(hot_coin):
     f_out = open(output_fpath, 'a')
     record_cnt = 0
     cancel_cnt = 0
-    interval = config['cancel_adjustable_time']
     while True:
+        new_config.load_cancel_config()
+        interval = new_config.cancel_adjustable_time
         print_prefix = f'[Cancel: {cancel_cnt}]'
         logging.info(f'{print_prefix} Start time {utils.get_now_time_str("%Y/%m/%d %H:%M:%S")}...')
         result = hot_coin.get_open_order()
-        if 'data' in result and 'entrutsCur' in result['data'] and len(result['data']['entrutsCur']) > 0:
-            order_list = result['data']['entrutsCur']
+        if 'list' in result and len(result['list'])>0:
+            order_list = result['list']
             index = random.randint(0, len(order_list) - 1)
-            result = hot_coin.cancel_order(order_list[index]['id'])
-            if result['code'] == 200:
-                # order_info = hot_coin.get_order(order_id=order_list[index]['id'])
-                order_info = order_list[index]
+            result = hot_coin.cancel_order(order_list[index]['orderId'])
+            if result['status'] == 'PENDING_CANCEL':
+                order_info = hot_coin.get_order(order_id=result['orderId'])
                 # logging.info(f'{print_prefix} {order_info}')
-                # if order_info['status'] == '已撤销':
-                # cancal successful
-                interval = 12 * config['cancel_adjustable_time'] / len(order_list)
-                logging.info(f"{print_prefix} 撤销订单: {order_list[index]['id']}, " \
-                             f"types: {order_info['types']}, price: {order_info['price']}, " \
-                             f"'count': {float(order_info['count']) - float(order_info['leftcount'])}" \
-                             f", 委托单个数: {len(order_list)}, 撤单间隔: {round(interval, 2)}s")
-                cancel_record = CancelRecord(
-                    order_info['id'],
-                    order_info['types'],
-                    order_info['price'],
-                    order_info['count'],
-                    order_info['leftcount'],
-                    utils.get_now_time_str(),
-                )
-                f_out.write('\t'.join([str(it) for it in list(cancel_record)]) + '\n')
-                record_cnt += 1
-                record_max_num = 1000
-                if config['debug']:
-                    record_max_num = 10
-                if record_cnt > record_max_num:
-                    f_out.close()
-                    # clear old file
-                    filelist = os.listdir(config['cancel_data_dir'])
-                    if len(filelist) > config['save_file_num']:
-                        filelist.sort(reverse=True)
-                        for name in filelist[config['save_file_num']:]:
-                            delete_path = os.path.join(config['cancel_data_dir'], name)
-                            os.remove(delete_path)
-                    # new file name
-                    min = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-                    output_fpath = os.path.join(config['cancel_data_dir'], min)
-                    f_out = open(output_fpath, 'a')
-                    record_cnt = 0
+                if order_info['status'] == 'CANCELED':
+                    # cancal successful
+                    interval = 12 * new_config.cancel_adjustable_time / len(order_list)
+                    logging.info(f"{print_prefix} 撤销订单: {order_list[index]['orderId']}, " \
+                                 f"side: {order_info['side']}, price: {order_info['price']}, " \
+                                 f"'qty': {float(order_info['origQty'])-float(order_info['executedQty'])}" \
+                                 f", 委托单个数: {len(order_list)}, 撤单间隔: {round(interval,2)}s")
+                    cancel_record = CancelRecord(
+                        order_info['orderId'],
+                        order_info['side'],
+                        order_info['price'],
+                        order_info['origQty'],
+                        order_info['executedQty'],
+                        utils.get_now_time_str(),
+                        )
+                    f_out.write('\t'.join([str(it) for it in list(cancel_record)]) + '\n')
+                    record_cnt += 1
+                    record_max_num = 1000
+                    if config['debug']:
+                        record_max_num = 10
+                    if record_cnt > record_max_num:
+                        f_out.close()
+                        # clear old file
+                        filelist = os.listdir(config['cancel_data_dir'])
+                        if len(filelist) > config['save_file_num']:
+                            filelist.sort(reverse=True)
+                            for name in filelist[config['save_file_num']:]:
+                                delete_path = os.path.join(config['cancel_data_dir'], name)
+                                os.remove(delete_path)
+                        # new file name
+                        min = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+                        output_fpath = os.path.join(config['cancel_data_dir'], min)
+                        f_out = open(output_fpath, 'a')
+                        record_cnt = 0
             time.sleep(interval)  # 120s/每次撤单的延时时间为未成交单量,相当于恒定未成交单量的速度下，两分钟可以撤销完
         else:
             logging.info(f"{print_prefix} find no open order, continue")
-            time.sleep(config['cancel_adjustable_time'])
+            time.sleep(new_config.cancel_adjustable_time)
         cancel_cnt += 1
 
 
@@ -243,19 +242,18 @@ def save_trades(hot_coin, output_dir, save_file_num=1000):
     def parse_my_trade(input_trades):
         trade_res = []
         try:
-            for trade_info in input_trades['data']:
+            for trade_info in input_trades['list']:
                 trade_res.append(TradeRecord(
                     trade_info['id'],
-                    trade_info['type'],
+                    trade_info['side'],
                     trade_info['price'],
-                    trade_info['filledAmount'],
-                    utils.unix_ms_to_str(float(trade_info['createdAt'])),
+                    trade_info['qty'],
+                    utils.unix_ms_to_str(float(trade_info['time'])),
                 ))
         except Exception as e:
             traceback.print_exc()
         return trade_res
-
-    trade_ret = parse_my_trade(hot_coin.get_my_trade())
+    trade_ret = parse_my_trade(hot_coin.get_my_trade(limit=1000))
     trade_ret = pd.DataFrame(trade_ret)
     trade_ret.to_csv(output_fpath, header=True)
     logging.info(f"[save Trade] Successfully save trades: {output_fpath}")
@@ -305,7 +303,7 @@ def print_cancel_report(input_dir, output_dir, start_time=0, end_time=0):
     all_data = []
     for name in filelist:
         fpath = os.path.join(input_dir, name)
-        all_data.append(pd.read_csv(fpath, sep='\t', names=list(CancelRecord._fields), encoding='unicode_escape'))
+        all_data.append(pd.read_csv(fpath, sep='\t', names=list(CancelRecord._fields)))
     all_data = pd.concat(all_data).drop_duplicates()
     if start_time:
         all_data = all_data[all_data['time'] >= int(start_time)]
@@ -381,7 +379,7 @@ def target_trade_allocation(hot_coin, adjust_percent, duration_min, action_num):
             time.sleep(duration_second_list[i])
             target_trade_action(hot_coin, adjust_percent_list[i])
     except Exception as e:
-        traceback.print_exc()
+        logger.exception(e)
 
 
 # async func
@@ -391,10 +389,10 @@ def func(target_func):
             logging.info("Start main func...")
 
             async def main_logic():
-                async with websockets.connect(config['web_addr'], ping_interval=None) as websocket:
+                async with websockets.connect(new_config.WEBSOCKETS_API, ping_interval=None) as websocket:
                     await target_func(websocket)
 
             asyncio.get_event_loop().run_until_complete(main_logic())
         except Exception as e:
-            traceback.print_exc()
+            logger.exception(e)
             logging.warning("Main func failed, restart")
