@@ -112,7 +112,7 @@ async def self_trade(hot_coin, websocket):
 # cross trade
 # 在买一和买十，卖一和卖十之间随机取价和区间，每6秒下单一次
 async def cross_trade(hot_coin, websocket):
-    reqParam = config['depth_param']
+    reqParam = '{\"event\":\"sub\",\"params\":{\"channel\":\"market_' + new_config.SYMBOL.lower() + '_depth_step0\",\"cb_id\":\"1\"}}'
     await websocket.send(reqParam)
     cross_cnt = 0
     while True:
