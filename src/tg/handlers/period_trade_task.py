@@ -353,7 +353,7 @@ def current_price(update, context):
 
 def get_current_price():
     hot_coin = HotCoin(symbol=config.SYMBOL)
-    ticker_data = hot_coin.get_ticker(86400)
+    ticker_data = hot_coin.get_24h_ticker()
     if 'last' in ticker_data:
         price = float(ticker_data['last'])
         price = round(price, config.price_decimal_num)
