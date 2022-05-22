@@ -170,6 +170,10 @@ class HotCoin:
         """cancel specfic order(done)"""
         return self.signed_request('POST', 'cancel', orderId=order_id, symbol=self.symbol)
 
+    def cancel_order_batch(self, order_ids):
+        """cancel specfic order(done)"""
+        return self.signed_request('POST', 'batchCancel', orderIds=order_ids, symbol=self.symbol)
+
     def get_current_order(self, limit=100):
         """get current orders"""
         return self.signed_request('GET', 'openOrders', symbol=self.symbol, limit=limit)
@@ -218,4 +222,3 @@ if __name__ == "__main__":
     #     print(hot_coin.get_depth())
         # time.sleep(3)
     # print(hot_coin.get_account_info())
-    # print(hot_coin.get_order())
