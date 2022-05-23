@@ -199,9 +199,12 @@ def run_sched():
                 logger.warning(f'{print_prefix} 交易量获取失败 {ticker_data}')
                 remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'交易量获取失败，请检查IP是否被封禁，API错误信息 {ticker_data["msg"]}')
             else:
+                current_time = datetime.datetime.now().timestamp() * 1000
                 minutes_vol = 0
-                for i in range(int(new_config.alert_vol_count_minute)):
-                    minutes_vol += float(ticker_data[i]['vol'])
+                for item in ticker_data:
+                    if float(item['idx']) <= current_time - ((new_config.alert_vol_count_minute + 1) * 60 * 1000):
+                        break
+                    minutes_vol += float(item['vol'])
                 if minutes_vol < new_config.alert_vol_min:
                     logger.warning(f'{print_prefix} 交易量异常，{new_config.alert_vol_count_minute}分钟内交易 {minutes_vol}，'
                                    f'小于设定最小值{new_config.alert_vol_min}')
