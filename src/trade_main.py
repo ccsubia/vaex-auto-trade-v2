@@ -290,7 +290,7 @@ def run_sched():
             logger.exception(e)
             remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 遇到未知错误: ' + str(e))
 
-    @sched.scheduled_job('interval', seconds=5)
+    @sched.scheduled_job('interval', seconds=60)
     def cancelOldOrder():
         print_prefix = f'[cancelOldOrder]'
         try:
