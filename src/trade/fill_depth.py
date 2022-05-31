@@ -20,7 +20,7 @@ async def fill_depth(hot_coin, websocket):
             print_prefix = f'[Fill Depth: {self_cnt}]'
             config.load_config()
 
-            # Check fork_trade_on
+            # Check fill_depth_on
             if not config.fill_depth_on:
                 logger.warning('fill_depth 关闭, 10秒后重试')
                 self_cnt = 0

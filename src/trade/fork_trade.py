@@ -34,6 +34,8 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                 while True:
                     print_prefix = f'[Fork Trade: {self_cnt}]'
                     config.load_config()
+                    fork_symbol = (config.fork_symbol + 'USDT').upper()
+                    print(fork_symbol)
 
                     # Check fork_trade_on
                     if not config.fork_trade_on:
@@ -55,7 +57,7 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                         logger.info(f'{print_prefix} WSS => fork_coin_data_price: {fork_coin_data_price}')
                         # logger.info(f'{print_prefix} WSS =>  {fork_coin_ret}')
                     else:
-                        fork_coin_ticker_data = HotCoin(symbol='BTCUSDT').get_24h_ticker()
+                        fork_coin_ticker_data = HotCoin(symbol=fork_symbol).get_24h_ticker()
                         fork_coin_data_price = 0
                         if 'last' in fork_coin_ticker_data:
                             fork_coin_data_price = float(fork_coin_ticker_data['last'])
@@ -94,7 +96,7 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                         break
 
                     # Get Depth
-                    fork_coin_depth_data = HotCoin(symbol='BTCUSDT').get_depth()
+                    fork_coin_depth_data = HotCoin(symbol=fork_symbol).get_depth()
                     self_coin_depth_data = hot_coin.get_depth()
                     # logger.info(fork_coin_depth_data)
                     # logger.info(self_coin_depth_data)
@@ -193,8 +195,8 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                         logger.info(
                             f'{print_prefix} 下单方向:{item["trade_type"]}, 价格:{item["price"]}, 下单量:{item["amount"]}')
                         result = hot_coin.trade(item["price"], item["amount"], item["trade_type"])
-                        # resultId = result['orderId']
-                        # logger.info(f'{print_prefix} 下单成功， ID：{resultId}')
+                        resultId = result['orderId']
+                        logger.info(f'{print_prefix} 下单成功， ID：{resultId}')
                     # Sleep
                     logger.info(f'{print_prefix} 交易完成, {config.fork_trade_interval}秒后重新进入')
                     time.sleep(config.fork_trade_interval)
