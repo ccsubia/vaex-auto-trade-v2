@@ -1,9 +1,11 @@
 # -*- coding:utf-8 -*-
 import asyncio
+import configparser
 import datetime
 import logging
 import math
 import multiprocessing
+import os
 import time
 import traceback
 
@@ -22,6 +24,7 @@ from utils.config_loader import config as new_config
 from utils.logger_init import init_logger
 from utils.remind_func import remind_tg
 
+raw_config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
 logger = logging.getLogger(__name__)
 
 init_logger(__file__)
@@ -319,6 +322,64 @@ def run_sched():
             logger.exception(e)
             remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 遇到未知错误: ' + str(e))
 
+    @sched.scheduled_job('interval', seconds=3)
+    def auto_fork_config():
+        print_prefix = f'[Auto Fork Config]'
+        try:
+            new_config.load_config()
+            logger.info(f'{print_prefix}')
+            if not new_config.auto_fork_trade_config_on:
+                logger.info(f'{print_prefix} 未开启')
+                return
+            new_hot_coin = HotCoin(symbol=new_config.SYMBOL)
+            ticker_data = new_hot_coin.get_ticker()
+            if 'msg' not in ticker_data:
+                current_time = datetime.datetime.now().timestamp() * 1000
+                skip_vol = 0
+                skip_time = math.fmod(current_time, new_config.target_vol_interval_minutes * 60 * 1000)
+                for item in ticker_data:
+                    logger.debug(item)
+                    if float(item['idx']) <= current_time - skip_time:
+                        break
+                    skip_vol += float(item['vol'])
+                if skip_vol <= 0:
+                    logger.info(f'{print_prefix} 已产生交易量为0')
+                    return False
+                logger.info(f'{print_prefix} 已度过时间 => {skip_time / 1000 / 60} 分钟')
+                logger.info(f'{print_prefix} 已产生交易量 => {skip_vol}')
+                time_scale = new_config.target_vol_interval_minutes * 60 * 1000 / skip_time
+                logger.info(f'{print_prefix} 预计交易量 => {skip_vol * time_scale}')
+                logger.info(f'{print_prefix} 目标交易量 => {new_config.target_vol}')
+                vol_scale = new_config.target_vol / (skip_vol * time_scale)
+                logger.info(f'{print_prefix} vol_scale => {vol_scale}')
+
+                logger.info(f'{print_prefix} fork_trade_random_amount_min => {new_config.fork_trade_random_amount_min}')
+                logger.info(f'{print_prefix} fork_trade_random_amount_max => {new_config.fork_trade_random_amount_max}')
+
+                new_config.fork_trade_random_amount_min = max(new_config.fork_trade_random_amount_min_min,
+                                                              vol_scale * new_config.fork_trade_random_amount_min)
+                new_config.fork_trade_random_amount_min = min(new_config.fork_trade_random_amount_min_max,
+                                                              new_config.fork_trade_random_amount_min)
+
+                new_config.fork_trade_random_amount_max = max(new_config.fork_trade_random_amount_max_min,
+                                                              vol_scale * new_config.fork_trade_random_amount_max)
+                new_config.fork_trade_random_amount_max = min(new_config.fork_trade_random_amount_max_max,
+                                                              new_config.fork_trade_random_amount_max)
+
+                raw_config = configparser.ConfigParser()
+                raw_config.read(raw_config_path, encoding='utf-8')
+                raw_config['Trade']['fork_trade_random_amount_min'] = str(new_config.fork_trade_random_amount_min)
+                raw_config['Trade']['fork_trade_random_amount_max'] = str(new_config.fork_trade_random_amount_max)
+                with open(raw_config_path, 'w') as configfile:
+                    raw_config.write(configfile)
+                logger.info(f'{print_prefix} new fork_trade_random_amount_min => {new_config.fork_trade_random_amount_min}')
+                logger.info(f'{print_prefix} new fork_trade_random_amount_max => {new_config.fork_trade_random_amount_max}')
+            else:
+                logger.warning(f'{print_prefix} 交易量获取失败 {ticker_data}')
+                remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'交易量获取失败，请检查IP是否被封禁，API错误信息 {ticker_data["msg"]}')
+        except Exception as e:
+            logger.exception(e)
+            remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 遇到未知错误: ' + str(e))
     sched.start()
 
 
