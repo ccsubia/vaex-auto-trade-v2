@@ -19,6 +19,7 @@ from trade.default_config import config
 from trade.fill_depth import fill_depth
 from trade.fork_trade import fork_trade
 from trade.hot_coin_api import HotCoin
+from trade.jump_depth import jump_depth
 from utils.account_info import accountClass
 from utils.config_loader import config as new_config
 from utils.logger_init import init_logger
@@ -322,7 +323,7 @@ def run_sched():
             logger.exception(e)
             remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 遇到未知错误: ' + str(e))
 
-    @sched.scheduled_job('interval', seconds=3)
+    @sched.scheduled_job('interval', seconds=300)
     def auto_fork_config():
         print_prefix = f'[Auto Fork Config]'
         try:
@@ -392,7 +393,7 @@ if __name__ == '__main__':
     hot_coin = HotCoin(symbol=new_config.SYMBOL)
     hot_coin.auth(key=new_config.ACCESS_KEY, secret=new_config.SECRET_KEY)
     multiprocessing.set_start_method('spawn')
-    pool = multiprocessing.Pool(processes=12)
+    pool = multiprocessing.Pool(processes=13)
     pool.apply_async(func, (hot_coin, hot_coin_func_trade.self_trade,))
     pool.apply_async(func, (hot_coin, hot_coin_func_trade.cross_trade,))
     pool.apply_async(cancel_pool, (hot_coin,))
@@ -403,6 +404,7 @@ if __name__ == '__main__':
     # pool.apply_async(func, (hot_coin, period_trade.period_trade,))
     pool.apply_async(func, (hot_coin, alert_price,))
     pool.apply_async(func, (hot_coin, fork_trade,))
+    pool.apply_async(func, (hot_coin, jump_depth,))
     pool.apply_async(func, (hot_coin, fill_depth,))
     pool.apply_async(tg_bot)
     pool.apply_async(run_sched)
