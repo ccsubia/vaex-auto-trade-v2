@@ -16,6 +16,8 @@ raw_config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(_
 def init(dispatcher: Dispatcher):
     """Provide handlers initialization."""
     dispatcher.add_handler(CommandHandler('cross_trade_config_show', cross_trade_config_show))
+    dispatcher.add_handler(CommandHandler('cross_trade_on', cross_trade_on))
+    dispatcher.add_handler(CommandHandler('cross_trade_off', cross_trade_off))
     dispatcher.add_handler(CommandHandler('set_cross_trade_interval', set_cross_trade_interval))
     dispatcher.add_handler(CommandHandler('set_cross_tradeMin', set_cross_tradeMin))
     dispatcher.add_handler(CommandHandler('set_cross_tradeMax', set_cross_tradeMax))
@@ -27,11 +29,40 @@ def init(dispatcher: Dispatcher):
 def cross_trade_config_show(update, context):
     logger.info('cross_trade_config_show')
     text = f'*#{config.SYMBOL_NAME} Cross交易配置*\n' \
+           f'开关：{config.cross_trade_on}\n' \
            f'交易间隔时间：{config.cross_trade_interval}s\n' \
            f'盘口深度：{config.cross_depth}\n' \
            f'交易数量区间：{config.cross_tradeMin} - {config.cross_tradeMax}\n' \
            f'交易价格区间：{config.cross_trade_price_min} - {config.cross_trade_price_max}'
     rsp = update.message.reply_markdown(text)
+    rsp.done.wait(timeout=60)
+
+
+@restricted_admin
+def cross_trade_on(update, context):
+    raw_config = configparser.ConfigParser()
+    raw_config.read(raw_config_path, encoding='utf-8')
+    logger.info('cross_trade_on')
+    config.cross_trade_on = True
+    raw_config['Trade']['cross_trade_on'] = 'True'
+    with open(raw_config_path, 'w') as configfile:
+        raw_config.write(configfile)
+    text = '设置成功'
+    rsp = update.message.reply_text(text)
+    rsp.done.wait(timeout=60)
+
+
+@restricted_admin
+def cross_trade_off(update, context):
+    raw_config = configparser.ConfigParser()
+    raw_config.read(raw_config_path, encoding='utf-8')
+    logger.info('cross_trade_off')
+    config.cross_trade_on = False
+    raw_config['Trade']['cross_trade_on'] = 'False'
+    with open(raw_config_path, 'w') as configfile:
+        raw_config.write(configfile)
+    text = '设置成功'
+    rsp = update.message.reply_text(text)
     rsp.done.wait(timeout=60)
 
 

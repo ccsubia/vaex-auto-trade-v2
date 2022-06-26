@@ -16,6 +16,8 @@ raw_config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(_
 def init(dispatcher: Dispatcher):
     """Provide handlers initialization."""
     dispatcher.add_handler(CommandHandler('self_trade_config_show', self_trade_config_show))
+    dispatcher.add_handler(CommandHandler('self_trade_on', self_trade_on))
+    dispatcher.add_handler(CommandHandler('self_trade_off', self_trade_off))
     dispatcher.add_handler(CommandHandler('set_self_trade_interval', set_self_trade_interval))
     dispatcher.add_handler(CommandHandler('set_self_tradeMin', set_self_tradeMin))
     dispatcher.add_handler(CommandHandler('set_self_tradeMax', set_self_tradeMax))
@@ -24,9 +26,38 @@ def init(dispatcher: Dispatcher):
 def self_trade_config_show(update, context):
     logger.info('self_trade_config_show')
     text = f'*#{config.SYMBOL_NAME} Self交易配置*\n' \
+           f'开关：{config.self_trade_on}\n' \
            f'交易间隔时间：{config.self_trade_interval}s\n' \
            f'交易数量区间：{config.self_tradeMin} - {config.self_tradeMax}'
     rsp = update.message.reply_markdown(text)
+    rsp.done.wait(timeout=60)
+
+
+@restricted_admin
+def self_trade_on(update, context):
+    raw_config = configparser.ConfigParser()
+    raw_config.read(raw_config_path, encoding='utf-8')
+    logger.info('self_trade_on')
+    config.self_trade_on = True
+    raw_config['Trade']['self_trade_on'] = 'True'
+    with open(raw_config_path, 'w') as configfile:
+        raw_config.write(configfile)
+    text = '设置成功'
+    rsp = update.message.reply_text(text)
+    rsp.done.wait(timeout=60)
+
+
+@restricted_admin
+def self_trade_off(update, context):
+    raw_config = configparser.ConfigParser()
+    raw_config.read(raw_config_path, encoding='utf-8')
+    logger.info('self_trade_off')
+    config.self_trade_on = False
+    raw_config['Trade']['self_trade_on'] = 'False'
+    with open(raw_config_path, 'w') as configfile:
+        raw_config.write(configfile)
+    text = '设置成功'
+    rsp = update.message.reply_text(text)
     rsp.done.wait(timeout=60)
 
 

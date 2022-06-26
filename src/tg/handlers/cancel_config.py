@@ -16,6 +16,8 @@ raw_config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(_
 def init(dispatcher: Dispatcher):
     """Provide handlers initialization."""
     dispatcher.add_handler(CommandHandler('cancel_config_show', cancel_config_show))
+    dispatcher.add_handler(CommandHandler('cancel_adjustable_on', cancel_adjustable_on))
+    dispatcher.add_handler(CommandHandler('cancel_adjustable_off', cancel_adjustable_off))
     dispatcher.add_handler(CommandHandler('set_cancel_adjustable_time', set_cancel_adjustable_time))
     dispatcher.add_handler(CommandHandler('set_cancel_before_order_minutes', set_cancel_before_order_minutes))
 
@@ -23,9 +25,38 @@ def init(dispatcher: Dispatcher):
 def cancel_config_show(update, context):
     logger.info('cancel_config_show')
     text = f'*#{config.SYMBOL_NAME} 撤单配置*\n' \
+           f'开关：{config.cancel_adjustable_on}\n' \
            f'撤单间隔时间：{config.cancel_adjustable_time}s\n' \
            f'委托单大于距当前：{config.cancel_before_order_minutes}分钟'
     rsp = update.message.reply_markdown(text)
+    rsp.done.wait(timeout=60)
+
+
+@restricted_admin
+def cancel_adjustable_on(update, context):
+    raw_config = configparser.ConfigParser()
+    raw_config.read(raw_config_path, encoding='utf-8')
+    logger.info('cancel_adjustable_on')
+    config.cancel_adjustable_on = True
+    raw_config['Trade']['cancel_adjustable_on'] = 'True'
+    with open(raw_config_path, 'w') as configfile:
+        raw_config.write(configfile)
+    text = '设置成功'
+    rsp = update.message.reply_text(text)
+    rsp.done.wait(timeout=60)
+
+
+@restricted_admin
+def cancel_adjustable_off(update, context):
+    raw_config = configparser.ConfigParser()
+    raw_config.read(raw_config_path, encoding='utf-8')
+    logger.info('cancel_adjustable_off')
+    config.cancel_adjustable_on = False
+    raw_config['Trade']['cancel_adjustable_on'] = 'False'
+    with open(raw_config_path, 'w') as configfile:
+        raw_config.write(configfile)
+    text = '设置成功'
+    rsp = update.message.reply_text(text)
     rsp.done.wait(timeout=60)
 
 
