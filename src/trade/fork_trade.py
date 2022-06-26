@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 async def fork_trade(hot_coin, fork_coin_websocket):
     global print_prefix
     logger.info('enter fork trade')
-    fork_coin_kline_param = '{\"event\": \"sub\",\"params\": {\"channel\": \"market_btcusdt_ticker\", \"cb_id\": \"1\"}}'
+    fork_coin_kline_param = '{\"event\": \"sub\",\"params\": {\"channel\": \"market_' + config.fork_symbol.lower() + 'usdt_ticker\", \"cb_id\": \"1\"}}'
     self_coin_kline_param = '{\"event\": \"sub\",\"params\": {\"channel\": \"market_' + config.SYMBOL.lower() + '_ticker\", \"cb_id\": \"1\"}}'
 
     self_cnt = 0
@@ -35,11 +35,11 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                     print_prefix = f'[Fork Trade: {self_cnt}]'
                     config.load_config()
                     fork_symbol = (config.fork_symbol + 'USDT').upper()
-                    print(fork_symbol)
+                    # print(fork_symbol)
 
                     # Check fork_trade_on
                     if not config.fork_trade_on:
-                        logger.warning('fork_trade 关闭, 10秒后重试')
+                        logger.warning(f'{print_prefix} fork_trade 关闭, 10秒后重试')
                         self_cnt = 0
                         fork_coin_scale = 0
                         time.sleep(10)
@@ -102,8 +102,10 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                     # logger.info(self_coin_depth_data)
                     if 'asks' not in fork_coin_depth_data:
                         logger.warning(f'{print_prefix} 深度获取失败')
+                        time.sleep(1)
                         continue
                     if 'asks' not in self_coin_depth_data:
+                        time.sleep(1)
                         logger.warning(f'{print_prefix} 深度获取失败')
                         continue
                     if fork_coin_scale == 0:
@@ -131,57 +133,89 @@ async def fork_trade(hot_coin, fork_coin_websocket):
 
                     # 发起卖单，消耗买单1
                     trade_b1_price = round(self_coin_trade_b1_price, config.price_decimal_num)
-                    trade_b1_amount = round(self_coin_b1_amount * 1.1, config.vol_decimal_num)
+                    # trade_b1_amount = round(self_coin_b1_amount * 1.1, config.vol_decimal_num)
+                    trade_b1_amount = round(random.uniform(config.fork_trade_random_amount_min,
+                                                           config.fork_trade_random_amount_max), config.vol_decimal_num)
                     trade_b1_type = 0
                     # print('trade_b1_price', trade_b1_price, 'trade_b1_amount', trade_b1_amount, 'trade_b1_type', trade_b1_type)
 
                     # 发起买单，消耗卖单1
                     trade_s1_price = round(self_coin_trade_s1_price, config.price_decimal_num)
-                    trade_s1_amount = round(self_coin_s1_amount * 1.1, config.vol_decimal_num)
+                    # trade_s1_amount = round(self_coin_s1_amount * 1.1, config.vol_decimal_num)
+                    trade_s1_amount = round(random.uniform(config.fork_trade_random_amount_min,
+                                                           config.fork_trade_random_amount_max), config.vol_decimal_num)
                     trade_s1_type = 1
                     # print('trade_s1_price', trade_s1_price, 'trade_s1_amount', trade_s1_amount, 'trade_s1_type', trade_s1_type)
 
                     trade_all_list = []
                     # 挂单交易买一卖一
                     if trade_b1_price < self_coin_data_price:
+                        logger.debug('1')
+                        depth_amount = 0
+                        for item in self_coin_depth_data['bids']:
+                            if trade_b1_price <= float(item[0]) <= self_coin_data_price:
+                                depth_amount = depth_amount + float(item[1])
+                        # trade_all_list.append(
+                        #     {'price': trade_s1_price, 'depth_amount': self_coin_s1_amount, 'amount': trade_s1_amount, 'trade_type': trade_s1_type})
                         trade_all_list.append(
-                            {'price': trade_s1_price, 'amount': trade_s1_amount, 'trade_type': trade_s1_type})
-                        trade_all_list.append(
-                            {'price': trade_b1_price, 'amount': trade_b1_amount, 'trade_type': trade_b1_type})
+                            {'price': trade_b1_price, 'depth_amount': depth_amount, 'amount': trade_b1_amount,
+                             'trade_type': trade_b1_type})
                     else:
+                        logger.debug('2')
+                        depth_amount = 0
+                        for item in self_coin_depth_data['asks']:
+                            if trade_b1_price >= float(item[0]) >= self_coin_data_price:
+                                depth_amount = depth_amount + float(item[1])
+                        # trade_all_list.append(
+                        #     {'price': trade_b1_price, 'depth_amount': self_coin_b1_amount, 'amount': trade_b1_amount, 'trade_type': trade_b1_type})
                         trade_all_list.append(
-                            {'price': trade_b1_price, 'amount': trade_b1_amount, 'trade_type': trade_b1_type})
-                        trade_all_list.append(
-                            {'price': trade_s1_price, 'amount': trade_s1_amount, 'trade_type': trade_s1_type})
+                            {'price': trade_s1_price, 'depth_amount': depth_amount, 'amount': trade_s1_amount,
+                             'trade_type': trade_s1_type})
 
-                    # 挂单买卖2-3
-                    for i in range(4):
-                        push_sell_price = float(
-                            fork_coin_depth_data['asks'][i + 1][0]) * fork_coin_scale
-                        push_sell_price = round(push_sell_price, config.price_decimal_num)
-                        push_sell_amount = round(random.uniform(config.fork_trade_random_amount_min,
-                                                                config.fork_trade_random_amount_max), config.vol_decimal_num)
-                        trade_all_list.append(
-                            {'price': push_sell_price, 'amount': push_sell_amount, 'trade_type': 0})
+                    new_hot_coin = HotCoin(symbol=config.SYMBOL)
+                    new_hot_coin.auth(key=config.ACCESS_KEY, secret=config.SECRET_KEY)
+                    currentOrderData = new_hot_coin.get_open_order(1000)
 
-                        push_buy_price = float(
-                            fork_coin_depth_data['bids'][i + 1][0]) * fork_coin_scale
-                        push_buy_price = round(push_buy_price, config.price_decimal_num)
-                        push_buy_amount = round(random.uniform(config.fork_trade_random_amount_min,
-                                                               config.fork_trade_random_amount_max), config.vol_decimal_num)
-                        trade_all_list.append({'price': push_buy_price, 'amount': push_buy_amount, 'trade_type': 1})
+                    check_error_flag = False
+                    owner_order_vol = 0
+                    if 'list' in currentOrderData:
+                        # logger.debug(len(currentOrderData['list']))
+                        # logger.debug(currentOrderData['list'])
+                        if len(currentOrderData['list']) > 0:
+                            for item in currentOrderData['list']:
+                                if trade_all_list[0]['trade_type'] == 0:
+                                    if trade_all_list[0]['price'] <= float(item['price']) <= self_coin_data_price \
+                                            and item['side'] == 'BUY':
+                                        owner_order_vol = owner_order_vol + float(item['origQty']) - float(
+                                            item['executedQty'])
+                                else:
+                                    if trade_all_list[0]['price'] >= float(item['price']) >= self_coin_data_price\
+                                            and item['side'] == 'SELL':
+                                        owner_order_vol = owner_order_vol + float(item['origQty']) - float(
+                                            item['executedQty'])
+                        # logger.info(f'{print_prefix}\n'
+                        #             f'挂单价格：{trade_all_list[0]["price"]}\n'
+                        #             f'{config.SYMBOL_NAME}当前价格：{self_coin_data_price}\n'
+                        #             f'Bot委托单量：{owner_order_vol}\n'
+                        #             f'盘口交易量：{trade_all_list[0]["depth_amount"]}\n'
+                        #             f'非Bot挂单量：{trade_all_list[0]["depth_amount"] - owner_order_vol}')
+                        if trade_all_list[0]['depth_amount'] - owner_order_vol > config.fork_trade_amount_max:
+                            check_error_flag = True
+                            remind_tg(config.ALERT_PRICE_TG_CHAT, f'{print_prefix}非Bot挂单量超额\n'
+                                                                  f'挂单价格：{trade_all_list[0]["price"]}\n'
+                                                                  f'{config.SYMBOL_NAME}当前价格：{self_coin_data_price}\n'
+                                                                  f'Bot委托单量：{owner_order_vol}\n'
+                                                                  f'盘口交易量：{trade_all_list[0]["depth_amount"]}\n'
+                                                                  f'非Bot挂单量：{trade_all_list[0]["depth_amount"] - owner_order_vol}')
+                    else:
+                        check_error_flag = True
+                        logger.warning(f'{print_prefix} 委托单数据获取错误')
 
                     # 校验限制
-                    check_error_flag = False
                     for item in trade_all_list:
                         if not config.ALERT_PRICE_MAX > item["price"] > config.ALERT_PRICE_MIN:
                             logger.warning(f'{print_prefix}交易价格超出预警区间, 价格: {item["price"]}')
                             remind_tg(config.ALERT_PRICE_TG_CHAT, f'{print_prefix}交易价格超出预警区间, 价格: {item["price"]}')
-                            check_error_flag = True
-                            break
-                        if item["amount"] > config.fork_trade_amount_max:
-                            logger.warning(f'{print_prefix}交易量超额, 交易量：{item["amount"]}')
-                            remind_tg(config.ALERT_PRICE_TG_CHAT, f'{print_prefix}交易量超额, 交易量：{item["amount"]}')
                             check_error_flag = True
                             break
                     if check_error_flag:
@@ -202,7 +236,7 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                     time.sleep(config.fork_trade_interval)
                     self_cnt += 1
         except ConnectionClosedError as e:
-            logger.warning(e)
+            logger.exception(e)
             logger.warning(f'{print_prefix} fork websockets 连接断开, 3秒后重连')
             time.sleep(3)
             continue
@@ -212,5 +246,5 @@ async def fork_trade(hot_coin, fork_coin_websocket):
             fork_coin_scale = 0
             logger.error(f'Fork Trade: 未知错误')
             logger.exception(e)
-            time.sleep(1)
+            time.sleep(30)
             continue

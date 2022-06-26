@@ -103,6 +103,8 @@ def main():
         my_bot = MQBot(config.BOT_TOKEN, request=request, mqueue=q)
         updater = Updater(bot=my_bot, use_context=True)
 
+        updater.dispatcher.add_error_handler(error)
+
         load_handlers(updater.dispatcher)
 
         updater.start_polling()
@@ -126,6 +128,12 @@ def load_handlers(dispatcher: Dispatcher):
             module = import_module(f'tg.handlers.{handler_module}', 'handlers')
             module.init(dispatcher)
             logger.info('loaded handler module: {}'.format(handler_module))
+
+
+def error(update, context):
+    context_error = str(context.error)
+    logger.exception(context_error)
+    update.message.reply_text(context_error)
 
 
 if __name__ == '__main__':

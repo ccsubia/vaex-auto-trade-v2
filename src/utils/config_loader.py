@@ -94,10 +94,12 @@ class _Config:
         self._price_decimal_num = 8
         self._vol_decimal_num = 2
 
+        self._self_trade_on = False
         self._self_trade_interval = 10
         self._self_trade_min = 0
         self._self_trade_max = 0
 
+        self._cross_trade_on = False
         self._cross_trade_interval = 10
         self._cross_trade_min = 0
         self._cross_trade_max = 1
@@ -105,6 +107,7 @@ class _Config:
         self._cross_trade_price_min = 0
         self._cross_trade_price_max = 0
 
+        self._cancel_adjustable_on = False
         self._cancel_adjustable_time = 30
         self._cancel_before_order_minutes = 60
 
@@ -261,6 +264,7 @@ class _Config:
             'self_trade_min',
             'self_trade_max',
         ]
+        self.get_config_from_section('bool', 'self_trade_on', config_trade)
         self.get_config_from_section('float', self_trade_keywords, config_trade)
         self.get_config_from_section('int', ['price_decimal_num', 'vol_decimal_num'], config_trade)
 
@@ -285,6 +289,7 @@ class _Config:
             'cross_trade_price_min',
             'cross_trade_price_max',
         ]
+        self.get_config_from_section('bool', 'cross_trade_on', config_trade)
         self.get_config_from_section('float', cross_trade_keywords, config_trade)
         self.get_config_from_section('int', ['price_decimal_num', 'vol_decimal_num'], config_trade)
 
@@ -301,6 +306,7 @@ class _Config:
             sys.exit(1)
         config_trade = config_file['Trade']
 
+        self.get_config_from_section('bool', 'cancel_adjustable_on', config_trade)
         self.get_config_from_section('float', ['cancel_adjustable_time', 'cancel_before_order_minutes'], config_trade)
 
     def load_all_config(self):
@@ -862,6 +868,14 @@ class _Config:
 
     # Self Trade
     @property
+    def self_trade_on(self):
+        return self._self_trade_on
+    
+    @self_trade_on.setter
+    def self_trade_on(self, val):
+        self._self_trade_on = val
+    
+    @property
     def self_trade_interval(self):
         return self._self_trade_interval
 
@@ -886,6 +900,14 @@ class _Config:
         self._self_trade_max = val
 
     # Cross Trade
+    @property
+    def cross_trade_on(self):
+        return self._cross_trade_on
+    
+    @cross_trade_on.setter
+    def cross_trade_on(self, val):
+        self._cross_trade_on = val
+    
     @property
     def cross_trade_interval(self):
         return self._cross_trade_interval
@@ -935,6 +957,14 @@ class _Config:
         self._cross_trade_price_max = val
 
     # Cancel
+    @property
+    def cancel_adjustable_on(self):
+        return self._cancel_adjustable_on
+    
+    @cancel_adjustable_on.setter
+    def cancel_adjustable_on(self, val):
+        self._cancel_adjustable_on = val
+
     @property
     def cancel_adjustable_time(self):
         return self._cancel_adjustable_time

@@ -103,11 +103,17 @@ jump_depth_vol_max = 20
 jump_depth_cancel_interval = 5
 ;撤补功能间隔(秒)
 jump_depth_interval = 15
+
+;self交易开关
+self_trade_on = False
 ;Self交易间隔(秒)
 self_trade_interval = 10
 ;Self交易交易量区间
 self_trade_min = 0
 self_trade_max = 1
+
+;cross交易开关
+cross_trade_on = False
 ;Cross交易间隔(秒)
 cross_trade_interval = 10
 ;Cross交易交易量区间
@@ -118,6 +124,9 @@ cross_depth = 10
 ;Cross交易价格区间
 cross_trade_price_min = 0
 cross_trade_price_max = 0
+
+;cancel adjustable 开关
+cancel_adjustable_on = False
 ;撤单交易间隔时间(秒)
 cancel_adjustable_time = 30
 ;撤销指定分钟前的所有委托单

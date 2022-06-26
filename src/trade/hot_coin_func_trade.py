@@ -75,7 +75,14 @@ async def self_trade(hot_coin, websocket):
         new_config.load_self_trade_config()
         try:
             print_prefix = f'[Self Trade: {self_cnt}]'
-            logging.info(f'{print_prefix} Start time {utils.get_now_time_str("%Y/%m/%d %H:%M:%S")}...')
+
+            # Check ON
+            if not new_config.self_trade_on:
+                logger.warning(f'{print_prefix} 关闭, 10秒后重试')
+                self_cnt = 0
+                time.sleep(10)
+                continue
+
             buyprice, buyvolume, sellprice, sellvolume = await get_dpeth(websocket)
             if not buyprice or not sellprice:
                 logging.warning(f"{print_prefix} get depth failed, retry")
@@ -119,7 +126,14 @@ async def cross_trade(hot_coin, websocket):
         try:
             new_config.load_cross_trade_config()
             print_prefix = f'[Cross Trade: {cross_cnt}]'
-            logging.info(f'{print_prefix} Start time {utils.get_now_time_str("%Y/%m/%d %H:%M:%S")}...')
+
+            # Check ON
+            if not new_config.cross_trade_on:
+                logger.warning(f'{print_prefix} 关闭, 10秒后重试')
+                cross_cnt = 0
+                time.sleep(10)
+                continue
+
             buyprice, buyvolume, sellprice, sellvolume = await get_dpeth(websocket)
             if not buyprice or not sellprice:
                 logging.warning(f"{print_prefix} get depth failed, retry")
@@ -183,7 +197,14 @@ def adjustable_cancel(hot_coin):
         new_config.load_cancel_config()
         interval = new_config.cancel_adjustable_time
         print_prefix = f'[Cancel: {cancel_cnt}]'
-        logging.info(f'{print_prefix} Start time {utils.get_now_time_str("%Y/%m/%d %H:%M:%S")}...')
+
+        # Check ON
+        if not new_config.cancel_adjustable_on:
+            logger.warning(f'{print_prefix} 关闭, 10秒后重试')
+            cancel_cnt = 0
+            time.sleep(10)
+            continue
+
         result = hot_coin.get_open_order()
         if 'list' in result and len(result['list'])>0:
             order_list = result['list']

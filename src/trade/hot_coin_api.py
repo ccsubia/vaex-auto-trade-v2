@@ -124,6 +124,9 @@ class HotCoin:
             traceback.print_exc()
         if r.status_code == 200:
             return r.json()
+        else:
+            logger.warning(r.json())
+            raise Exception(str(r.json()))
 
     def get_depth(self, limit=100):
         """get market depth"""
