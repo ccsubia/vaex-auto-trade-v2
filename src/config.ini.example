@@ -69,7 +69,7 @@ auto_fork_trade_config_on = False
 fork_trade_amount_max = 100
 ;对标交易发起交易量区间
 fork_trade_random_amount_min = 1
-fork_trade_random_amount_max = 2
+fork_trade_random_amount_max = 10
 ;自动调整对标交易量最小区间
 fork_trade_random_amount_min_min = 1
 fork_trade_random_amount_min_max = 2
