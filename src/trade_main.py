@@ -347,7 +347,7 @@ def run_sched():
                                                                       f'USDT总余额减少：{sub_usdt_balance}')
                 else:
                     logger.warning(f'{print_prefix} 账户信息获取失败 {account_info_data}')
-                    remind_tg(new_config.ALERT_PRICE_TG_CHAT, '账户信息获取失败，请检查IP是否被封禁')
+                    remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'账户信息获取失败: {account_info_data}')
         except Exception as e:
             logger.exception(e)
             remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 遇到未知错误: ' + str(e))
@@ -377,7 +377,8 @@ def run_sched():
                             logger.info(f'{print_prefix} 撤销委托单ID => {item}')
                             logger.info(new_hot_coin.cancel_order(item))
             else:
-                logger.warning(f'{print_prefix} 委托单数据获取错误')
+                logger.warning(f'{print_prefix} 委托单数据获取错误, {currentOrderData}')
+                remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 委托单数据获取错误: {currentOrderData}')
         except Exception as e:
             logger.exception(e)
             remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 遇到未知错误: ' + str(e))

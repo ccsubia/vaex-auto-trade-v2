@@ -39,6 +39,7 @@ async def fill_depth(hot_coin, websocket):
                     buyprice.append(round(Decimal(order[0]), config.price_decimal_num))
             else:
                 logger.warning(f'{print_prefix} 深度获取失败')
+                time.sleep(1)
                 continue
             trade_all_list = []
             self_coin_b1_price = Decimal(round(buyprice[0], config.price_decimal_num))
@@ -89,5 +90,6 @@ async def fill_depth(hot_coin, websocket):
     except Exception as e:
         logger.error(f'{print_prefix}: 未知错误, 睡眠{config.fill_depth_interval}秒')
         logger.exception(e)
+        remind_tg(config.ALERT_PRICE_TG_CHAT, f'未知错误: {print_prefix} {e}')
         time.sleep(config.fill_depth_interval)
 

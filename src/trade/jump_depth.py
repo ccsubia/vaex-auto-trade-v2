@@ -39,7 +39,8 @@ async def jump_depth(hot_coin, websocket):
                 for order in depth_data['bids']:
                     buyprice.append(round(Decimal(order[0]), config.price_decimal_num))
             else:
-                logger.warning(f'{print_prefix} 深度获取失败')
+                logger.warning(f'{print_prefix} 深度获取失败 {depth_data}')
+                time.sleep(3)
                 continue
             trade_all_list = []
             self_coin_b1_price = Decimal(round(buyprice[0], config.price_decimal_num))
@@ -100,4 +101,5 @@ async def jump_depth(hot_coin, websocket):
     except Exception as e:
         logger.error(f'{print_prefix}: 未知错误, 睡眠{config.jump_depth_interval}秒')
         logger.exception(e)
+        remind_tg(config.ALERT_PRICE_TG_CHAT, f'未知错误: {print_prefix} {e}')
         time.sleep(config.jump_depth_interval)

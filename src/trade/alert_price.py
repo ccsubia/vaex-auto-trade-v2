@@ -19,6 +19,7 @@ raw_config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'conf
 
 async def alert_price(hot_coin, websocket):
     self_cnt = 0
+    print_prefix = f'[Alert Price: {self_cnt}]'
     while True:
         try:
             print_prefix = f'[Alert Price: {self_cnt}]'
@@ -112,5 +113,6 @@ async def alert_price(hot_coin, websocket):
         except Exception as e:
             logger.error(f'Alert Price: 未知错误, 3秒后重试')
             logger.exception(e)
+            remind_tg(config.ALERT_PRICE_TG_CHAT, f'未知错误: {print_prefix} {e}')
             time.sleep(3)
             break

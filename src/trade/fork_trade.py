@@ -210,6 +210,7 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                     else:
                         check_error_flag = True
                         logger.warning(f'{print_prefix} 委托单数据获取错误')
+                        remind_tg(config.ALERT_PRICE_TG_CHAT, f'{print_prefix} 委托单数据获取错误: {currentOrderData}')
 
                     # 校验限制
                     for item in trade_all_list:
@@ -246,5 +247,6 @@ async def fork_trade(hot_coin, fork_coin_websocket):
             fork_coin_scale = 0
             logger.error(f'Fork Trade: 未知错误')
             logger.exception(e)
+            remind_tg(config.ALERT_PRICE_TG_CHAT, f'{print_prefix}, 未知错误: {e}')
             time.sleep(30)
             continue
