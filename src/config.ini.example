@@ -67,13 +67,13 @@ fork_trade_on = False
 auto_fork_trade_config_on = False
 ;对标交易最大交易量
 fork_trade_amount_max = 100
-;对标交易复刻盘口发起交易量区间
+;对标交易发起交易量区间
 fork_trade_random_amount_min = 1
 fork_trade_random_amount_max = 2
-;自动调整复刻盘口最小交易量区间
+;自动调整对标交易量最小区间
 fork_trade_random_amount_min_min = 1
 fork_trade_random_amount_min_max = 2
-;自动调整复刻盘口最大交易量区间
+;自动调整对标交易量最大区间
 fork_trade_random_amount_max_min = 10
 fork_trade_random_amount_max_max = 20
 ;对标币种
