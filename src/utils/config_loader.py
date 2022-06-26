@@ -264,7 +264,7 @@ class _Config:
             'self_trade_min',
             'self_trade_max',
         ]
-        self.get_config_from_section('bool', 'self_trade_on', config_trade)
+        self.get_config_from_section('bool', ['self_trade_on'], config_trade)
         self.get_config_from_section('float', self_trade_keywords, config_trade)
         self.get_config_from_section('int', ['price_decimal_num', 'vol_decimal_num'], config_trade)
 
@@ -289,7 +289,7 @@ class _Config:
             'cross_trade_price_min',
             'cross_trade_price_max',
         ]
-        self.get_config_from_section('bool', 'cross_trade_on', config_trade)
+        self.get_config_from_section('bool', ['cross_trade_on'], config_trade)
         self.get_config_from_section('float', cross_trade_keywords, config_trade)
         self.get_config_from_section('int', ['price_decimal_num', 'vol_decimal_num'], config_trade)
 
@@ -306,7 +306,7 @@ class _Config:
             sys.exit(1)
         config_trade = config_file['Trade']
 
-        self.get_config_from_section('bool', 'cancel_adjustable_on', config_trade)
+        self.get_config_from_section('bool', ['cancel_adjustable_on'], config_trade)
         self.get_config_from_section('float', ['cancel_adjustable_time', 'cancel_before_order_minutes'], config_trade)
 
     def load_all_config(self):
