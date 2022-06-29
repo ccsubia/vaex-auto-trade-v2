@@ -29,7 +29,7 @@ async def jump_depth(hot_coin, websocket):
 
             # Get Depth
             self_coin_depth_data = hot_coin.get_depth()
-            logger.debug(self_coin_depth_data)
+            # logger.debug(self_coin_depth_data)
 
             sellprice, buyprice = [], []
             depth_data = self_coin_depth_data

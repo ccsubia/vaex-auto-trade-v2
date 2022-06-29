@@ -133,4 +133,4 @@
 - `/cancel_over_order_on` 开启撤销累积单
 - `/cancel_over_order_off` 关闭撤销累积单配置
 - `/set_cancel_over_order_interval` 设置撤销累积单配置执行时间间隔(秒)
-- `/set_cancel_over_order_vol`设置筛选超额盘口挂单量
+- `/set_cancel_over_order_vol` 设置筛选超额盘口挂单量
