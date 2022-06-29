@@ -16,6 +16,7 @@
 - `/rm_admin`  添加管理员
     - 参数1 → 移除的管理员ID
 - `/admin_list` 查看管理员列表ID
+
 - `/alert_tg_on`   开启TG预警
 - `/alert_tg_off` 关闭 TG预警
 - `/alert_server_jiang_on`开启Server酱预警
@@ -30,6 +31,7 @@
 - `/set_alert_price_tg_chat` 设置预警发送对话
     - 参数1 → 预警发送到TG对话ID
 - `set_alert_usdt_balance_over` 设置预警USDT减少数量
+
 - `/fork_trade_on`  开启对标交易
 - `/fork_trade_off` 关闭对标交易
 - `/fork_trade_config_show` 查看当前对标交易配置
@@ -47,6 +49,7 @@
 - `/set_fork_random_amount_max_max` 自动调整复刻盘口最大交易量区间最大值
 - `/set_fork_trade_interval` 设置fork交易间隔(秒)
 - `/set_fork_symbol` 设置对标代币
+
 - `/batch_push_trade_on`开启批量挂单
 - `/batch_push_trade_off`关闭批量挂单
 - `/pending_batch_push_trade_show`查看当前待执行批量挂单任务
@@ -62,10 +65,12 @@
   - 无参数
 - `/confirm_add_batch_push_trade` 确认执行批量挂单
 - `/reset_pending_batch_push_trade` 清除当前待执行批量挂单任务
+
 - `/set_alert_vol_count_minute` 设置交易量检测的时间段, 单位分钟
     - 参数1 → 时间段,单位分钟
 - `/set_alert_vol_min` 设置时间段内需满足的最小交易量
     - 参数1 → 需满足的最小交易量
+
 - `/auto_batch_push_trade_show` 达到最大价格自动交易配置
 - `/set_auto_batch_push_trade` 达到最大价格预设自动交易
     - 参数1 → 买卖方向（1⇒买，0⇒ 卖）
@@ -86,6 +91,7 @@
     - 参数6 → 单量增量
     - 参数7 → 每单挂单时间间隔
 - `/reset_auto_batch_push_trade2` 清除达到最小价格自动交易预设
+
 - `/default_batch_push_trade_show` 查看默认批量挂单配置
 - `/set_default_batch_push_trade` 设置默认批量挂单配置
     - 参数1 → 买卖方向（1⇒买，0⇒ 卖）
@@ -113,7 +119,7 @@
 - `/set_cross_trade_price_max`设置Cross 交易最大价格
 - `/set_cross_depth`设置Cross 交易深度
 
-- `/cancel_config_show`查看V1撤单配置
+- `/cancel_config_show` 查看V1撤单配置
 - `/cancel_adjustable_on` 开启V1撤单
 - `/cancel_adjustable_off` 关闭V1撤单
 - `/set_cancel_adjustable_time`设置撤单时间间隔(秒)
@@ -122,3 +128,9 @@
 - `/decimal_config_show` 查看精度配置
 - `/set_price_decimal_num` 设置价格精度
 - `/set_vol_decimal_num` 设置交易量精度
+
+- `/cancel_over_order_config_show` 查看撤销累积单配置
+- `/cancel_over_order_on` 开启撤销累积单
+- `/cancel_over_order_off` 关闭撤销累积单配置
+- `/set_cancel_over_order_interval` 设置撤销累积单配置执行时间间隔(秒)
+- `/set_cancel_over_order_vol`设置筛选超额盘口挂单量

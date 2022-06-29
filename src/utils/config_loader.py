@@ -91,6 +91,10 @@ class _Config:
         self._jump_depth_cancel_interval = 0
         self._jump_depth_interval = 0
 
+        self._cancel_over_order_on = False
+        self._cancel_over_order_interval = 5
+        self._cancel_over_order_vol = 100
+
         self._price_decimal_num = 8
         self._vol_decimal_num = 2
 
@@ -177,6 +181,8 @@ class _Config:
             'jump_depth_interval',
             'target_vol_interval_minutes',
             'target_vol',
+            'cancel_over_order_interval',
+            'cancel_over_order_vol',
         ]
         config_trade_keywords_bool = [
             'period_trade_on',
@@ -186,6 +192,7 @@ class _Config:
             'auto_fork_trade_config_on',
             'fill_depth_on',
             'jump_depth_on',
+            'cancel_over_order_on',
         ]
 
         config_auto_push_trade_keywords_float = [
@@ -865,7 +872,31 @@ class _Config:
     @jump_depth_interval.setter
     def jump_depth_interval(self, val):
         self._jump_depth_interval = val
-
+    
+    @property
+    def cancel_over_order_on(self):
+        return self._cancel_over_order_on
+    
+    @cancel_over_order_on.setter
+    def cancel_over_order_on(self, val):
+        self._cancel_over_order_on = val
+    
+    @property
+    def cancel_over_order_interval(self):
+        return self._cancel_over_order_interval
+    
+    @cancel_over_order_interval.setter
+    def cancel_over_order_interval(self, val):
+        self._cancel_over_order_interval = val
+    
+    @property
+    def cancel_over_order_vol(self):
+        return self._cancel_over_order_vol
+    
+    @cancel_over_order_vol.setter
+    def cancel_over_order_vol(self, val):
+        self._cancel_over_order_vol = val
+    
     # Self Trade
     @property
     def self_trade_on(self):

@@ -43,16 +43,18 @@ async def fill_depth(hot_coin, websocket):
                 continue
             trade_all_list = []
             self_coin_b1_price = Decimal(round(buyprice[0], config.price_decimal_num))
+            self_coin_s1_price = Decimal(round(sellprice[0], config.price_decimal_num))
+            start_price = (self_coin_s1_price + self_coin_b1_price) / 2
             price_step = round(Decimal(0.1) ** config.price_decimal_num, config.price_decimal_num)
             for i in range(29):
-                fill_sell_price = self_coin_b1_price + price_step * (i + 2)
+                fill_sell_price = start_price + price_step * (i + 2)
                 push_sell_price = round(fill_sell_price, config.price_decimal_num)
                 push_sell_amount = round(random.uniform(config.fill_depth_random_amount_min,
                                                         config.fill_depth_random_amount_max), config.vol_decimal_num)
                 if fill_sell_price not in sellprice:
                     trade_all_list.append({'price': push_sell_price, 'amount': push_sell_amount, 'trade_type': 0})
 
-                fill_buy_price = self_coin_b1_price - price_step * (i + 1)
+                fill_buy_price = start_price - price_step * (i + 1)
                 push_buy_price = round(fill_buy_price, config.price_decimal_num)
                 push_buy_amount = round(random.uniform(config.fill_depth_random_amount_min,
                                                        config.fill_depth_random_amount_max), config.vol_decimal_num)

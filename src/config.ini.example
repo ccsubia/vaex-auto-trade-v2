@@ -65,7 +65,7 @@ default_batch_push_trade_time_interval = 0
 fork_trade_on = False
 ;是否开启自动调整对标交易配置
 auto_fork_trade_config_on = False
-;对标交易最大交易量
+;对标交易非Bot最大交易量
 fork_trade_amount_max = 100
 ;对标交易发起交易量区间
 fork_trade_random_amount_min = 1
@@ -103,6 +103,13 @@ jump_depth_vol_max = 20
 jump_depth_cancel_interval = 5
 ;撤补功能间隔(秒)
 jump_depth_interval = 15
+
+;是否开启撤销累积订单
+cancel_over_order_on = False
+;执行间隔时间
+cancel_over_order_interval = 5
+;筛选超额盘口挂单量
+cancel_over_order_vol = 100
 
 ;self交易开关
 self_trade_on = False

@@ -15,6 +15,7 @@ from apscheduler.schedulers.blocking import BlockingScheduler
 from tg.bot import main as tg_bot
 from trade import hot_coin_func_trade, utils
 from trade.alert_price import alert_price
+from trade.cancel_over_order import cancel_over_order
 from trade.default_config import config
 from trade.fill_depth import fill_depth
 from trade.fork_trade import fork_trade
@@ -256,23 +257,25 @@ def run_sched():
                 sub_coin_balance = accountClass.BOT_COIN_BALANCE - coin_balance
                 if accountClass.BOT_USDT_BALANCE == 0:
                     accountClass.BOT_USDT_BALANCE = usdt_balance
+                    accountClass.BOT_COIN_BALANCE = coin_balance
                     remind_tg(new_config.REPORT_TG_CHAT, f'#报告\n'
                                                          f'[Bot账户]\n'
-                                                         f'当前USDT余额：{usdt_balance}\n'
-                                                         f'可用USDT余额：{usdt_free_balance}\n'
-                                                         f'当前{new_config.SYMBOL_NAME}余额：{coin_balance}\n'
-                                                         f'可用{new_config.SYMBOL_NAME}余额：{coin_free_balance}')
-                elif datetime.datetime.now().minute == 0:
+                                                         f'当前USDT余额：{round(usdt_balance, 2)}\n'
+                                                         f'可用USDT余额：{round(usdt_free_balance, 2)}\n'
+                                                         f'当前{new_config.SYMBOL_NAME}余额：{round(coin_balance, 2)}\n'
+                                                         f'可用{new_config.SYMBOL_NAME}余额：{round(coin_free_balance, 2)}')
+                elif datetime.datetime.now().minute != 0:
                     accountClass.BOT_USDT_BALANCE = usdt_balance
+                    accountClass.BOT_COIN_BALANCE = coin_balance
                     remind_tg(new_config.REPORT_TG_CHAT, f'#报告\n'
                                                          f'[Bot账户]\n'
-                                                         f'当前USDT余额：{usdt_balance}\n'
-                                                         f'可用USDT余额：{usdt_free_balance}\n'
-                                                         f'USDT总余额减少：{sub_usdt_balance}\n'
-                                                         f'当前{new_config.SYMBOL_NAME}余额：{coin_balance}\n'
-                                                         f'可用{new_config.SYMBOL_NAME}余额：{coin_free_balance}\n'
-                                                         f'{new_config.SYMBOL_NAME}总余额减少：{sub_coin_balance}\n'
-                                                         f'USDT/{new_config.SYMBOL_NAME}：{sub_usdt_balance / sub_coin_balance}')
+                                                         f'当前USDT余额：{round(usdt_balance, 2)}\n'
+                                                         f'可用USDT余额：{round(usdt_free_balance, 2)}\n'
+                                                         f'USDT总余额减少：{round(sub_usdt_balance, 2)}\n'
+                                                         f'当前{new_config.SYMBOL_NAME}余额：{round(coin_balance, 2)}\n'
+                                                         f'可用{new_config.SYMBOL_NAME}余额：{round(coin_free_balance, 2)}\n'
+                                                         f'{new_config.SYMBOL_NAME}总余额减少：{round(sub_coin_balance, 2)}\n'
+                                                         f'USDT/{new_config.SYMBOL_NAME}：{0 if sub_coin_balance == 0 else round(sub_usdt_balance / sub_coin_balance, 4)}')
                 else:
                     if sub_usdt_balance > new_config.alert_usdt_balance_over_amount:
                         logger.warning(f'{print_prefix} [Bot账户] USDT余额异常\n'
@@ -281,9 +284,9 @@ def run_sched():
                                        f'USDT总余额减少：{sub_usdt_balance}')
                         remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'#预警\n'
                                                                   f'[Bot账户] USDT余额异常\n'
-                                                                  f'当前USDT余额：{usdt_balance}\n'
-                                                                  f'可用USDT余额：{usdt_free_balance}\n'
-                                                                  f'USDT总余额减少：{sub_usdt_balance}')
+                                                                  f'当前USDT余额：{round(usdt_balance, 2)}\n'
+                                                                  f'可用USDT余额：{round(usdt_free_balance, 2)}\n'
+                                                                  f'USDT总余额减少：{round(sub_usdt_balance, 2)}')
             else:
                 logger.warning(f'{print_prefix} 账户信息获取失败 {account_info_data}')
                 remind_tg(new_config.ALERT_PRICE_TG_CHAT, '账户信息获取失败，请检查IP是否被封禁')
@@ -312,28 +315,31 @@ def run_sched():
 
                     if len(accountClass.OTHER_ACCOUNT_USDT_BALANCE) == index:
                         accountClass.OTHER_ACCOUNT_USDT_BALANCE.append(0)
+                        accountClass.OTHER_ACCOUNT_COIN_BALANCE.append(0)
 
                     sub_usdt_balance = accountClass.OTHER_ACCOUNT_USDT_BALANCE[index] - usdt_balance
-                    sub_coin_balance = accountClass.OTHER_ACCOUNT_USDT_BALANCE[index] - coin_balance
+                    sub_coin_balance = accountClass.OTHER_ACCOUNT_COIN_BALANCE[index] - coin_balance
                     if accountClass.OTHER_ACCOUNT_USDT_BALANCE[index] == 0:
                         accountClass.OTHER_ACCOUNT_USDT_BALANCE[index] = usdt_balance
+                        accountClass.OTHER_ACCOUNT_COIN_BALANCE[index] = coin_balance
                         remind_tg(new_config.REPORT_TG_CHAT, f'#报告\n'
                                                              f'[人工账户{index + 1}]\n'
-                                                             f'当前USDT余额：{usdt_balance}\n'
-                                                             f'可用USDT余额：{usdt_free_balance}\n'
-                                                             f'当前{new_config.SYMBOL_NAME}余额：{coin_balance}\n'
-                                                             f'可用{new_config.SYMBOL_NAME}余额：{coin_free_balance}')
+                                                             f'当前USDT余额：{round(usdt_balance, 2)}\n'
+                                                             f'可用USDT余额：{round(usdt_free_balance, 2)}\n'
+                                                             f'当前{new_config.SYMBOL_NAME}余额：{round(coin_balance, 2)}\n'
+                                                             f'可用{new_config.SYMBOL_NAME}余额：{round(coin_free_balance, 2)}')
                     elif datetime.datetime.now().minute == 0:
                         accountClass.OTHER_ACCOUNT_USDT_BALANCE[index] = usdt_balance
+                        accountClass.OTHER_ACCOUNT_COIN_BALANCE[index] = coin_balance
                         remind_tg(new_config.REPORT_TG_CHAT, f'#报告\n'
                                                              f'[人工账户{index + 1}]\n'
-                                                             f'当前USDT余额：{usdt_balance}\n'
-                                                             f'可用USDT余额：{usdt_free_balance}\n'
-                                                             f'USDT总余额减少：{sub_usdt_balance}\n'
-                                                             f'当前{new_config.SYMBOL_NAME}余额：{coin_balance}\n'
-                                                             f'可用{new_config.SYMBOL_NAME}余额：{coin_free_balance}\n'
-                                                             f'{new_config.SYMBOL_NAME}总余额减少：{sub_coin_balance}\n'
-                                                             f'USDT/{new_config.SYMBOL_NAME}：{sub_usdt_balance / sub_coin_balance}')
+                                                             f'当前USDT余额：{round(usdt_balance, 2)}\n'
+                                                             f'可用USDT余额：{round(usdt_free_balance, 2)}\n'
+                                                             f'USDT总余额减少：{round(sub_usdt_balance, 2)}\n'
+                                                             f'当前{new_config.SYMBOL_NAME}余额：{round(coin_balance, 2)}\n'
+                                                             f'可用{new_config.SYMBOL_NAME}余额：{round(coin_free_balance, 2)}\n'
+                                                             f'{new_config.SYMBOL_NAME}总余额减少：{round(sub_coin_balance, 2)}\n'
+                                                             f'USDT/{new_config.SYMBOL_NAME}：{0 if sub_coin_balance == 0 else round(sub_usdt_balance / sub_coin_balance, 4)}')
                     else:
                         if sub_usdt_balance > new_config.alert_usdt_balance_over_amount:
                             logger.warning(f'{print_prefix} [人工账户{index + 1}] USDT余额异常\n'
@@ -342,9 +348,9 @@ def run_sched():
                                            f'USDT总余额减少：{sub_usdt_balance}')
                             remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'#预警\n'
                                                                       f'[人工账户{index + 1}] USDT余额异常\n'
-                                                                      f'当前USDT余额：{usdt_balance}\n'
-                                                                      f'可用USDT余额：{usdt_free_balance}\n'
-                                                                      f'USDT总余额减少：{sub_usdt_balance}')
+                                                                      f'当前USDT余额：{round(usdt_balance, 2)}\n'
+                                                                      f'可用USDT余额：{round(usdt_free_balance, 2)}\n'
+                                                                      f'USDT总余额减少：{round(sub_usdt_balance, 2)}')
                 else:
                     logger.warning(f'{print_prefix} 账户信息获取失败 {account_info_data}')
                     remind_tg(new_config.ALERT_PRICE_TG_CHAT, f'账户信息获取失败: {account_info_data}')
@@ -453,7 +459,7 @@ if __name__ == '__main__':
     hot_coin = HotCoin(symbol=new_config.SYMBOL)
     hot_coin.auth(key=new_config.ACCESS_KEY, secret=new_config.SECRET_KEY)
     multiprocessing.set_start_method('spawn')
-    pool = multiprocessing.Pool(processes=13)
+    pool = multiprocessing.Pool(processes=14)
     pool.apply_async(func, (hot_coin, hot_coin_func_trade.self_trade,))
     pool.apply_async(func, (hot_coin, hot_coin_func_trade.cross_trade,))
     pool.apply_async(cancel_pool, (hot_coin,))
@@ -466,7 +472,8 @@ if __name__ == '__main__':
     pool.apply_async(func, (hot_coin, fork_trade,))
     pool.apply_async(func, (hot_coin, jump_depth,))
     pool.apply_async(func, (hot_coin, fill_depth,))
-    pool.apply_async(tg_bot)
+    pool.apply_async(func, (hot_coin, cancel_over_order,))
     pool.apply_async(run_sched)
+    pool.apply_async(tg_bot)
     pool.close()
     pool.join()
