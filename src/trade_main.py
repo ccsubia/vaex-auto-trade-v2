@@ -264,7 +264,7 @@ def run_sched():
                                                          f'可用USDT余额：{round(usdt_free_balance, 2)}\n'
                                                          f'当前{new_config.SYMBOL_NAME}余额：{round(coin_balance, 2)}\n'
                                                          f'可用{new_config.SYMBOL_NAME}余额：{round(coin_free_balance, 2)}')
-                elif datetime.datetime.now().minute != 0:
+                elif datetime.datetime.now().minute == 0:
                     accountClass.BOT_USDT_BALANCE = usdt_balance
                     accountClass.BOT_COIN_BALANCE = coin_balance
                     remind_tg(new_config.REPORT_TG_CHAT, f'#报告\n'
