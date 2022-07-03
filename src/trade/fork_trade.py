@@ -157,9 +157,16 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                                 depth_amount = depth_amount + float(item[1])
                         # trade_all_list.append(
                         #     {'price': trade_s1_price, 'depth_amount': self_coin_s1_amount, 'amount': trade_s1_amount, 'trade_type': trade_s1_type})
+                        if depth_amount > 0:
+                            trade_all_list.append({'price': trade_b1_price, 'depth_amount': depth_amount,
+                                                   'amount': round(depth_amount, config.vol_decimal_num),
+                                                   'trade_type': trade_b1_type})
                         trade_all_list.append(
                             {'price': trade_b1_price, 'depth_amount': depth_amount, 'amount': trade_b1_amount,
                              'trade_type': trade_b1_type})
+                        trade_all_list.append(
+                            {'price': trade_b1_price, 'depth_amount': depth_amount, 'amount': trade_b1_amount,
+                             'trade_type': 1 - trade_b1_type})
                     else:
                         logger.debug('2')
                         depth_amount = 0
@@ -168,9 +175,16 @@ async def fork_trade(hot_coin, fork_coin_websocket):
                                 depth_amount = depth_amount + float(item[1])
                         # trade_all_list.append(
                         #     {'price': trade_b1_price, 'depth_amount': self_coin_b1_amount, 'amount': trade_b1_amount, 'trade_type': trade_b1_type})
+                        if depth_amount > 0:
+                            trade_all_list.append({'price': trade_s1_price, 'depth_amount': depth_amount,
+                                                   'amount': round(depth_amount, config.vol_decimal_num),
+                                                   'trade_type': trade_s1_type})
                         trade_all_list.append(
                             {'price': trade_s1_price, 'depth_amount': depth_amount, 'amount': trade_s1_amount,
                              'trade_type': trade_s1_type})
+                        trade_all_list.append(
+                            {'price': trade_s1_price, 'depth_amount': depth_amount, 'amount': trade_s1_amount,
+                             'trade_type': 1 - trade_s1_type})
 
                     new_hot_coin = HotCoin(symbol=config.SYMBOL)
                     new_hot_coin.auth(key=config.ACCESS_KEY, secret=config.SECRET_KEY)
