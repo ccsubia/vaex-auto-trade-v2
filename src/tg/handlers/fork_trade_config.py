@@ -239,11 +239,11 @@ def fork_trade_config_show(update, context):
            f'是否开启对标交易：{config.fork_trade_on}\n' \
            f'对标代币：{config.fork_symbol}\n' \
            f'对标间隔时间：{config.fork_trade_interval}s\n' \
-           f'买卖1最大挂单数量：{config.fork_trade_amount_max}\n' \
-           f'买卖2-5随机挂单量区间 {config.fork_trade_random_amount_min} - {config.fork_trade_random_amount_max}\n' \
-           f'是否开启自动配置：{config.auto_fork_trade_config_on}\n' \
-           f'自动调整复刻盘口最小交易量区间：{config.fork_trade_random_amount_min_min} - {config.fork_trade_random_amount_min_max}\n' \
-           f'自动调整复刻盘口最大交易量区间：{config.fork_trade_random_amount_max_min} - {config.fork_trade_random_amount_max_max}'
+           f'最大非Bot挂单数量：{config.fork_trade_amount_max}\n' \
+           f'刷交易量随机挂单量区间 {config.fork_trade_random_amount_min} - {config.fork_trade_random_amount_max}\n' \
+           f'是否开启自动调整配置：{config.auto_fork_trade_config_on}\n' \
+           f'自动调整刷交易量最小交易量区间：{config.fork_trade_random_amount_min_min} - {config.fork_trade_random_amount_min_max}\n' \
+           f'自动调整刷交易量最大交易量区间：{config.fork_trade_random_amount_max_min} - {config.fork_trade_random_amount_max_max}'
     rsp = update.message.reply_markdown(text)
     rsp.done.wait(timeout=60)
 
